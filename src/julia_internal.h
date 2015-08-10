@@ -177,8 +177,8 @@ DLLEXPORT void jl_raise_debugger(void);
 DLLEXPORT void attach_exception_port(void);
 #endif
 // Set *name and *filename to either NULL or malloc'd string
-void jl_getFunctionInfo(char **name, size_t *line, char **filename,
-                        uintptr_t pointer, int *fromC, int skipC);
+void jl_getFunctionInfo(char **name, size_t *line, char **filename, char **inlineinfo,
+                        uintptr_t pointer, int *fromC, int skipC, int skipInline);
 
 // *to is NULL or malloc'd pointer, from is allowed to be NULL
 static inline char *jl_copy_str(char **to, const char *from)

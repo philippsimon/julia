@@ -230,8 +230,9 @@ int OpInfoLookup(void *DisInfo, uint64_t PC,
     char *name;
     size_t line;
     char *filename;
+    char *inlineinfo;
     int fromC;
-    jl_getFunctionInfo(&name, &line, &filename, pointer, &fromC, skipC);
+    jl_getFunctionInfo(&name, &line, &filename, &inlineinfo, pointer, &fromC, skipC, 1);
     free(filename);
     if (!name)
         return 0;               // Did not find symbolic information

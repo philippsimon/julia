@@ -463,12 +463,14 @@ size_t bt_size = 0;
 
 // Always Set *func_name and *file_name to malloc'd pointers (non-NULL)
 static int frame_info_from_ip(char **func_name, size_t *line_num,
-                              char **file_name, size_t ip, int skipC)
+                              char **file_name, char** inline_info,
+                              size_t ip, int skipC, int skipInline)
 {
     static const char *name_unknown = "???";
     int fromC = 0;
 
-    jl_getFunctionInfo(func_name, line_num, file_name, ip, &fromC, skipC);
+    jl_getFunctionInfo(func_name, line_num, file_name, inline_info, ip, &fromC,
+                       skipC, skipInline);
     if (!*func_name) {
         *func_name = strdup(name_unknown);
         *line_num = ip;
@@ -701,17 +703,20 @@ DLLEXPORT jl_value_t *jl_lookup_code_address(void *ip, int skipC)
     char *func_name;
     size_t line_num;
     char *file_name;
+    char *inline_info;
     int fromC = frame_info_from_ip(&func_name, &line_num, &file_name,
-                                   (size_t)ip, skipC);
-    jl_value_t *r = (jl_value_t*)jl_alloc_svec(5);
+                                   &inline_info, (size_t)ip, skipC, 0);
+    jl_value_t *r = (jl_value_t*)jl_alloc_svec(6);
     JL_GC_PUSH1(&r);
     jl_svecset(r, 0, jl_symbol(func_name));
     jl_svecset(r, 1, jl_symbol(file_name));
-    jl_svecset(r, 2, jl_box_long(line_num));
-    jl_svecset(r, 3, jl_box_bool(fromC));
-    jl_svecset(r, 4, jl_box_long((intptr_t)ip));
+    jl_svecset(r, 2, jl_symbol(inline_info ? inline_info : "")); // TODO don't use symbol here?
+    jl_svecset(r, 3, jl_box_long(line_num));
+    jl_svecset(r, 4, jl_box_bool(fromC));
+    jl_svecset(r, 5, jl_box_long((intptr_t)ip));
     free(func_name);
     free(file_name);
+    free(inline_info);
     JL_GC_POP();
     return r;
 }
@@ -737,7 +742,9 @@ DLLEXPORT void gdblookup(ptrint_t ip)
     char *func_name;
     size_t line_num;
     char *file_name;
-    frame_info_from_ip(&func_name, &line_num, &file_name, ip, 0);
+    char *inline_info;
+    frame_info_from_ip(&func_name, &line_num, &file_name, &inline_info, ip,
+                      /* skipC */ 0, /* skipInline */ 1);
     if (line_num == ip) {
         jl_safe_printf("unknown function (ip: %p)\n", (void*)ip);
     } else if (line_num == -1) {
