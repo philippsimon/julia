@@ -98,12 +98,13 @@ clear_malloc_data() = ccall(:jl_clear_malloc_data, Void, ())
 immutable LineInfo
     func::ByteString
     file::ByteString
+    context::ByteString
     line::Int
     fromC::Bool
     ip::Int64 # large enough that this struct can be losslessly read on any machine (32 or 64 bit)
 end
 
-const UNKNOWN = LineInfo("?", "?", -1, true, 0)
+const UNKNOWN = LineInfo("?", "?", "?", -1, true, 0)
 
 #
 # If the LineInfo has function and line information, we consider two of them the same
@@ -134,8 +135,8 @@ maxlen_data() = convert(Int, ccall(:jl_profile_maxlen_data, Csize_t, ()))
 
 function lookup(ip::Ptr{Void})
     info = ccall(:jl_lookup_code_address, Any, (Ptr{Void},Cint), ip, false)
-    if length(info) == 5
-        return LineInfo(string(info[1]), string(info[2]), Int(info[3]), info[4], Int64(info[5]))
+    if length(info) == 6
+        return LineInfo(string(info[1]), string(info[2]), string(info[3]), Int(info[4]), info[5], Int64(info[6]))
     else
         return UNKNOWN
     end
