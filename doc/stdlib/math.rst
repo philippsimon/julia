@@ -1992,8 +1992,8 @@ some built-in integration support in Julia.
    The integrand ``f(x)`` can return any numeric scalar, vector, or matrix
    type, or in fact any type supporting ``+``, ``-``, multiplication
    by real values, and a ``norm`` (i.e., any normed vector space).
-   Alternatively, a different norm can be specified by passing a `norm`-like
-   function as the `norm` keyword argument (which defaults to `vecnorm`).
+   Alternatively, a different norm can be specified by passing a ``norm``-like
+   function as the ``norm`` keyword argument (which defaults to ``vecnorm``).
 
    [Only one-dimensional integrals are provided by this function.  For
    multi-dimensional integration (cubature), there are many different

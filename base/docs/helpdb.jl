@@ -5689,7 +5689,7 @@ Keyword arguments:
 
 ``max_parallel`` : specifies the maximum number of workers connected to in parallel at a host. Defaults to 10.
 
-``dir`` :  specifies the working directory on the workers. Defaults to the host's current directory (as found by `pwd()`)
+``dir`` :  specifies the working directory on the workers. Defaults to the host's current directory (as found by ``pwd()``)
 
 ``exename`` :  name of the julia executable. Defaults to "$JULIA_HOME/julia" or "$JULIA_HOME/julia-debug" as the case may be.
 
@@ -8503,7 +8503,7 @@ doc"""
 ::
            Base.compilecache(module::Symbol)
 
-Creates a precompiled cache file for module (see help for ``require``) and all of its dependencies. This can be used to reduce package load times. Cache files are stored in LOAD_CACHE_PATH[1], which defaults to `~/.julia/lib/VERSION`. See the manual section `Module initialization and precompilation` (under `Modules`) for important notes.
+Creates a precompiled cache file for module (see help for ``require``) and all of its dependencies. This can be used to reduce package load times. Cache files are stored in ``LOAD_CACHE_PATH[1]``, which defaults to ``~/.julia/lib/VERSION``. See the manual section ``Module initialization and precompilation`` (under ``Modules``) for important notes.
 ```
 """
 compilecache
@@ -11271,7 +11271,7 @@ doc"""
 ::
            cat(dims, A...)
 
-Concatenate the input arrays along the specified dimensions in the iterable ``dims``. For dimensions not in ``dims``, all input arrays should have the same size, which will also be the size of the output array along that dimension. For dimensions in ``dims``, the size of the output array is the sum of the sizes of the input arrays along that dimension. If ``dims`` is a single number, the different arrays are tightly stacked along that dimension. If ``dims`` is an iterable containing several dimensions, this allows to construct block diagonal matrices and their higher-dimensional analogues by simultaneously increasing several dimensions for every new input array and putting zero blocks elsewhere. For example, `cat([1,2], matrices...)` builds a block diagonal matrix, i.e. a block matrix with `matrices[1]`, `matrices[2]`, ... as diagonal blocks and matching zero blocks away from the diagonal.
+Concatenate the input arrays along the specified dimensions in the iterable ``dims``. For dimensions not in ``dims``, all input arrays should have the same size, which will also be the size of the output array along that dimension. For dimensions in ``dims``, the size of the output array is the sum of the sizes of the input arrays along that dimension. If ``dims`` is a single number, the different arrays are tightly stacked along that dimension. If ``dims`` is an iterable containing several dimensions, this allows to construct block diagonal matrices and their higher-dimensional analogues by simultaneously increasing several dimensions for every new input array and putting zero blocks elsewhere. For example, ``cat([1,2], matrices...)`` builds a block diagonal matrix, i.e. a block matrix with ``matrices[1]``, ``matrices[2]``, ... as diagonal blocks and matching zero blocks away from the diagonal.
 ```
 """
 cat
@@ -14698,8 +14698,8 @@ precision is set by the precision of the integration endpoints
 The integrand ``f(x)`` can return any numeric scalar, vector, or matrix
 type, or in fact any type supporting ``+``, ``-``, multiplication
 by real values, and a ``norm`` (i.e., any normed vector space).
-Alternatively, a different norm can be specified by passing a `norm`-like
-function as the `norm` keyword argument (which defaults to `vecnorm`).
+Alternatively, a different norm can be specified by passing a ``norm``-like
+function as the ``norm`` keyword argument (which defaults to ``vecnorm``).
 
 [Only one-dimensional integrals are provided by this function.  For
 multi-dimensional integration (cubature), there are many different
