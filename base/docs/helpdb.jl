@@ -6894,9 +6894,27 @@ Base.(:(.<=))
 doc"""
 ```rst
 ::
-           checkbounds(array, indexes...)
+           checkbounds(array::AbstractArray, indexes...)
 
 Throw an error if the specified indexes are not in bounds for the given array.
+
+::
+           checkbounds(dimlength::Integer, index)
+
+Throw an error if the specified index is not in bounds for the given dimension
+length.
+
+::
+           checkbounds(::Type{Bool}, array::AbstractArray, indexes...)
+           checkbounds(::Type{Bool}, dimlength::Integer, index)
+
+Like above, but instead of throwing an error simply return a ``Bool``
+describing if the index(es) are in bounds. Custom types should extend these
+methods in order to provide bounds checking for custom indices. The former
+allows custom ``AbstractArray``\ s to support index types unique to that
+specific array type, whereas the latter allows a way for a custom type to
+provide its own bounds checking algorithm so it may be used as an index for all
+arrays.
 ```
 """
 checkbounds

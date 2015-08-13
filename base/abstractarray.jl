@@ -139,58 +139,53 @@ end
 # Prevent allocation of a GC frame by hiding the BoundsError in a noinline function
 throw_boundserror(A, I) = (@_noinline_meta; throw(BoundsError(A, I)))
 
-# Just like getindex, we only define checkbounds(A::AbstractArray, I...) to
-# make extending it without ambiguities easier:
 function checkbounds(A::AbstractArray, I...)
     @_inline_meta
-    _internal_checkbounds(A, I...)
+    checkbounds(Bool, A, I...) || throw_boundserror(A, I)
 end
-_internal_checkbounds(A::AbstractArray, I) = (@_inline_meta; in_bounds(length(A), I) || throw_boundserror(A, I))
+checkbounds(::Type{Bool}, A::AbstractArray, I...) = (@_inline_meta; _internal_checkbounds(A, I...))
+# _internal_checkbounds is awkwardly named because we want keep the primary name
+# without indexing specialization to make extending easier, and there was an
+# undocumented _checkbounds previously that meant something different
+_internal_checkbounds(A::AbstractArray) = (@_inline_meta; 1 <= length(A))
+_internal_checkbounds(A::AbstractArray, I) = (@_inline_meta; checkbounds(Bool, length(A), I))
 function _internal_checkbounds(A::AbstractMatrix, I, J)
     @_inline_meta
-    (in_bounds(size(A,1), I) && in_bounds(size(A,2), J)) ||
-        throw_boundserror(A, (I, J))
+    checkbounds(Bool, size(A,1), I) && checkbounds(Bool, size(A,2), J)
 end
 function _internal_checkbounds(A::AbstractArray, I, J)
     @_inline_meta
-    (in_bounds(size(A,1), I) && in_bounds(trailingsize(A,Val{2}), J)) ||
-        throw_boundserror(A, (I, J))
+    checkbounds(Bool, size(A,1), I) && checkbounds(Bool, trailingsize(A,Val{2}), J)
 end
 @generated function _internal_checkbounds(A::AbstractArray, I...)
     meta = Expr(:meta, :inline)
     N = length(I)
-    Isplat = [:(I[$d]) for d=1:N]
-    error = :(throw_boundserror(A, tuple($(Isplat...))))
-    args = Expr[:(in_bounds(size(A,$dim), I[$dim]) || $error) for dim in 1:N-1]
-    push!(args, :(in_bounds(trailingsize(A,Val{$N}), I[$N]) || $error))
-    Expr(:block, meta, args...)
+    # @assert N > 1 "there must be non-generated methods to cover N < 2"
+    body = :(checkbounds(Bool, size(A,1), I[1]))
+    for d=2:N-1
+        body = :($body && checkbounds(Bool, size(A,$d), I[$d]))
+    end
+    body = :($body && checkbounds(Bool, trailingsize(A,Val{$N}), I[$N]))
+    Expr(:block, meta, body)
 end
 
-## Bounds-checking without errors; simply return true or false ##
-in_bounds(sz::Integer, i) = throw(ArgumentError("unable to check bounds for indices of type $(typeof(i))"))
-in_bounds(sz::Integer, i::Real) = 1 <= i <= sz
-in_bounds(sz::Integer, ::Colon) = true
-in_bounds(sz::Integer, r::Range) = (@_inline_meta; isempty(r) || (in_bounds(sz, minimum(r)) && in_bounds(sz,maximum(r))))
-in_bounds(sz::Integer, I::AbstractArray{Bool}) = length(I) == sz
-function in_bounds(sz::Integer, I::AbstractArray)
+## Bounds-checking just one index against a given dimension length ##
+checkbounds(sz::Integer, i) = checkbounds(Bool, sz, i) || throw(BoundsError())
+checkbounds(::Type{Bool}, sz::Integer, i) = throw(ArgumentError("unable to check bounds for indices of type $(typeof(i))"))
+checkbounds(::Type{Bool}, sz::Integer, i::Real) = 1 <= i <= sz
+checkbounds(::Type{Bool}, sz::Integer, ::Colon) = true
+checkbounds(::Type{Bool}, sz::Integer, I::AbstractArray{Bool}) = length(I) == sz
+function checkbounds(::Type{Bool}, sz::Integer, r::Range)
+    @_inline_meta
+    isempty(r) || (checkbounds(Bool, sz, minimum(r)) && checkbounds(Bool, sz, maximum(r)))
+end
+function checkbounds(::Type{Bool}, sz::Integer, I::AbstractArray)
     @_inline_meta
     b = true
     for i in I
-        b &= in_bounds(sz, i)
+        b &= checkbounds(Bool, sz, i)
     end
     b
-end
-
-function in_bounds(sz::Dims, I...)
-    n = length(I)
-    for dim = 1:(n-1)
-        in_bounds(sz[dim], I[dim]) || return false
-    end
-    s = sz[n]
-    for i = n+1:length(sz)
-        s *= sz[i]
-    end
-    in_bounds(s, I[n])
 end
 
 ## Constructors ##
@@ -661,9 +656,9 @@ end
 
 typealias RangeVecIntList{A<:AbstractVector{Int}} Union{Tuple{Vararg{Union{Range, AbstractVector{Int}}}}, AbstractVector{UnitRange{Int}}, AbstractVector{Range{Int}}, AbstractVector{A}}
 
-get(A::AbstractArray, i::Integer, default) = in_bounds(length(A), i) ? A[i] : default
+get(A::AbstractArray, i::Integer, default) = checkbounds(Bool, A, i) ? A[i] : default
 get(A::AbstractArray, I::Tuple{}, default) = similar(A, typeof(default), 0)
-get(A::AbstractArray, I::Dims, default) = in_bounds(size(A), I...) ? A[I...] : default
+get(A::AbstractArray, I::Dims, default) = checkbounds(Bool, A, I...) ? A[I...] : default
 
 function get!{T}(X::AbstractArray{T}, A::AbstractArray, I::Union{Range, AbstractVector{Int}}, default::T)
     ind = findin(I, 1:length(A))
