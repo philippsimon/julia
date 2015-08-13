@@ -2558,7 +2558,7 @@ function inlineable(f::ANY, e::Expr, atype::ANY, sv::StaticVarInfo, enclosing_as
     lastexpr = pop!(body.args)
     if isa(lastexpr,LabelNode)
         push!(body.args, lastexpr)
-        push!(body.args, Expr(:call,:error,"fatal error in type inference"))
+        push!(body.args, Expr(:call, :throw, Expr(:new, :ErrorException, "fatal error in type inference")))
         lastexpr = nothing
     else
         @assert isa(lastexpr,Expr) "inference.jl:1774"
