@@ -1,5 +1,10 @@
 (function () {
     'use strict';
+	
+    var ndarray = require('ndarray');
+    var ops = require('ndarray-ops');
+	var gemm = require('ndgemm');
+	var math = require('mathjs');
 
     var tmin, i, j, t, n, m, s, a, sum, a0, v, r, C;
 
@@ -422,7 +427,7 @@
 
         return matmul(A, B, n, n, n);
     }
-
+	
     tmin = Number.POSITIVE_INFINITY;
     t = (new Date()).getTime();
     C = randmatmul(1000);
@@ -430,4 +435,35 @@
     t = (new Date()).getTime()-t;
     if (t < tmin) { tmin=t; }
     console.log("javascript,rand_mat_mul," + tmin);
+	
+    function randmatmul_ndarray(n) {
+        var A = ops.random(ndarray(new Float64Array(n*n), [n, n]));
+        var B = ops.random(ndarray(new Float64Array(n*n), [n, n]));
+        var C = ndarray(new Float64Array(n*n), [n, n]);
+		
+		gemm(C, A, B);
+
+        return C;
+    }
+    tmin = Number.POSITIVE_INFINITY;
+    t = (new Date()).getTime();
+    C = randmatmul_ndarray(1000);
+    assert(0 <= C.data[0]);
+    t = (new Date()).getTime()-t;
+    if (t < tmin) { tmin=t; }
+    console.log("javascript,rand_mat_mul_ndarray," + tmin);
+	
+    function randmatmul_mathjs(n) {
+        var A = math.random([n, n]);
+        var B = math.random([n, n]);
+
+        return math.multiply(A, B);
+    }
+    tmin = Number.POSITIVE_INFINITY;
+    t = (new Date()).getTime();
+    C = randmatmul_mathjs(1000);
+    assert(0 <= C[0][0]);
+    t = (new Date()).getTime()-t;
+    if (t < tmin) { tmin=t; }
+    console.log("javascript,rand_mat_mul_mathjs," + tmin);
 }());
